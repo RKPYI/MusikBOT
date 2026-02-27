@@ -32,10 +32,10 @@ plugins:
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
     clients:
-      - TV              # Only OAuth-compatible client — tries first with your login
-      - MUSIC           # YouTube Music (search only, no playback)
-      - ANDROID_MUSIC   # Fallback for playback
-      - TVHTML5_SIMPLY  # Fallback
+      - TVHTML5_SIMPLY
+      - ANDROID_MUSIC
+      - WEB
+      - WEBEMBEDDED
     # ─── OAuth (recommended to avoid 403 / bot-check blocks) ─────────────
     oauth:
       enabled: true
@@ -49,6 +49,7 @@ logging:
   level:
     root: INFO
     lavalink: INFO
+    dev.lavalink.youtube: DEBUG
 
   logback:
     rollingpolicy:
