@@ -32,15 +32,14 @@ plugins:
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
     clients:
-      - MUSIC
-      - ANDROID_VR
-      - WEB
-      - TVHTML5_SIMPLY
+      - TV              # Only OAuth-compatible client — tries first with your login
+      - MUSIC           # YouTube Music (search only, no playback)
+      - ANDROID_MUSIC   # Fallback for playback
+      - TVHTML5_SIMPLY  # Fallback
     # ─── OAuth (recommended to avoid 403 / bot-check blocks) ─────────────
-    # Run the bot once, then check Lavalink logs for an OAuth URL.
-    # Visit the URL, authorize, and Lavalink will save a refresh token.
     oauth:
       enabled: true
+      refreshToken: ""
     # ─── PO Token (alternative / additional measure) ─────────────────────
     # pot:
     #   token: ""
