@@ -2,6 +2,7 @@
 .env
 .venv/
 venv/
+cookies.txt
 
 # Python
 __pycache__/

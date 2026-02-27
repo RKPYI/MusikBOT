@@ -3,13 +3,31 @@ Music source utilities for MusikBOT.
 Handles YouTube search/extraction and query routing.
 """
 
+import asyncio
+import os
 import re
 import logging
+from pathlib import Path
 from typing import Optional
 
 import yt_dlp
 
 logger = logging.getLogger("musikbot.sources")
+
+# ─── Cookie / PO Token support ───────────────────────────────────────────────
+# YouTube blocks automated requests. Solutions (in order of preference):
+#
+# 1. Install bgutil-ytdlp-pot-provider plugin + run its Docker server
+#    → fully automatic PO token generation, no cookies needed.
+#    pip install bgutil-ytdlp-pot-provider
+#    docker run -d --name bgutil-provider -p 4416:4416 brainicism/bgutil-ytdlp-pot-provider
+#
+# 2. Place a cookies.txt (Netscape format) in the project root.
+#
+# 3. Set COOKIES_FROM_BROWSER=firefox (or chrome, etc.) in .env
+#    (only works when the bot runs on a machine with that browser).
+_COOKIES_FILE = Path(__file__).resolve().parent.parent / "cookies.txt"
+_COOKIES_FROM_BROWSER = os.getenv("COOKIES_FROM_BROWSER")
 
 # yt-dlp options for audio extraction
 YDL_OPTIONS = {
@@ -21,6 +39,14 @@ YDL_OPTIONS = {
     "source_address": "0.0.0.0",
     "extract_flat": False,
 }
+
+# Apply cookie settings (only needed if NOT using PO Token plugin)
+if _COOKIES_FILE.is_file():
+    YDL_OPTIONS["cookiefile"] = str(_COOKIES_FILE)
+    logger.info("Using cookies from %s", _COOKIES_FILE)
+elif _COOKIES_FROM_BROWSER:
+    YDL_OPTIONS["cookiesfrombrowser"] = (_COOKIES_FROM_BROWSER,)
+    logger.info("Using cookies from browser: %s", _COOKIES_FROM_BROWSER)
 
 # FFmpeg options for discord.py voice
 FFMPEG_OPTIONS = {
@@ -73,41 +99,52 @@ class MusicSourceError(Exception):
 async def search_youtube(query: str) -> Optional[TrackInfo]:
     """
     Search YouTube for a query string and return the best match.
+    Runs yt-dlp in a thread to avoid blocking the event loop.
     """
+    loop = asyncio.get_running_loop()
     try:
-        with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
-            info = ydl.extract_info(f"ytsearch:{query}", download=False)
-            if not info or "entries" not in info or not info["entries"]:
-                return None
+        def _extract():
+            with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
+                return ydl.extract_info(f"ytsearch:{query}", download=False)
 
-            entry = info["entries"][0]
-            return TrackInfo(
-                title=entry.get("title", "Unknown"),
-                url=entry.get("webpage_url", ""),
-                stream_url=entry.get("url", ""),
-                duration=entry.get("duration", 0),
-                thumbnail=entry.get("thumbnail"),
-            )
+        info = await loop.run_in_executor(None, _extract)
+        if not info or "entries" not in info or not info["entries"]:
+            return None
+
+        entry = info["entries"][0]
+        return TrackInfo(
+            title=entry.get("title", "Unknown"),
+            url=entry.get("webpage_url", ""),
+            stream_url=entry.get("url", ""),
+            duration=entry.get("duration", 0),
+            thumbnail=entry.get("thumbnail"),
+        )
     except Exception as e:
         logger.error(f"YouTube search failed for '{query}': {e}")
         raise MusicSourceError(f"Could not find anything for: {query}") from e
 
 
 async def get_youtube_audio(url: str) -> Optional[TrackInfo]:
-    """Extract audio stream from a direct YouTube URL."""
+    """Extract audio stream from a direct YouTube URL.
+    Runs yt-dlp in a thread to avoid blocking the event loop.
+    """
+    loop = asyncio.get_running_loop()
     try:
-        with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
-            info = ydl.extract_info(url, download=False)
-            if not info:
-                return None
+        def _extract():
+            with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
+                return ydl.extract_info(url, download=False)
 
-            return TrackInfo(
-                title=info.get("title", "Unknown"),
-                url=info.get("webpage_url", url),
-                stream_url=info.get("url", ""),
-                duration=info.get("duration", 0),
-                thumbnail=info.get("thumbnail"),
-            )
+        info = await loop.run_in_executor(None, _extract)
+        if not info:
+            return None
+
+        return TrackInfo(
+            title=info.get("title", "Unknown"),
+            url=info.get("webpage_url", url),
+            stream_url=info.get("url", ""),
+            duration=info.get("duration", 0),
+            thumbnail=info.get("thumbnail"),
+        )
     except Exception as e:
         logger.error(f"YouTube extraction failed for '{url}': {e}")
         raise MusicSourceError(f"Could not extract audio from: {url}") from e

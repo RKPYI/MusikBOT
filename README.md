@@ -82,7 +82,33 @@ Edit `.env` and fill in your Discord bot token:
 DISCORD_TOKEN=your_discord_bot_token_here
 ```
 
-### 4. Run the Bot
+### 4. Set Up YouTube Authentication
+
+YouTube blocks automated requests. The recommended fix is the **PO Token plugin**, which generates authentication tokens automatically.
+
+#### Option A — Docker (easiest, recommended)
+
+```bash
+docker run -d --name bgutil-provider --restart unless-stopped -p 4416:4416 brainicism/bgutil-ytdlp-pot-provider
+```
+
+That's it — the plugin (already in `requirements.txt`) will connect to the server on `127.0.0.1:4416` automatically.
+
+#### Option B — Node.js (no Docker)
+
+```bash
+# Requires Node.js >= 20
+git clone --single-branch --branch 1.2.2 https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git
+cd bgutil-ytdlp-pot-provider/server/
+npm ci && npx tsc
+node build/main.js          # runs on port 4416
+```
+
+#### Option C — Cookies (fallback, expires periodically)
+
+Export cookies from your browser using the [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) extension and place `cookies.txt` in the project root. See `.env.example` for details.
+
+### 5. Run the Bot
 
 ```bash
 python bot.py
