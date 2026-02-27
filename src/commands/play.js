@@ -117,19 +117,28 @@ async function startPlayer(interaction, client, queue, guildId, member) {
             deaf: true,
         });
         queue.player = player;
+        console.log(`[Player] Joined voice channel in guild ${guildId}`);
 
         // Handle track end
         player.on("end", (data) => {
-            // Only advance queue when the track finished or was load-failed
+            console.log(`[Player] Track ended — reason: ${data.reason}`);
+
             // "replaced" means another track was started (e.g. skip) — ignore
             if (data.reason === "replaced") return;
+
+            // If the track failed to load, log it clearly
+            if (data.reason === "loadFailed") {
+                console.error("[Player] Track failed to load!");
+            }
 
             const next = queue.dequeue();
             if (next) {
                 queue.current = next;
+                console.log(`[Player] Playing next: ${next.track.info?.title ?? "unknown"}`);
                 player.playTrack({ track: { encoded: next.track.encoded } });
             } else {
                 queue.current = null;
+                console.log("[Player] Queue empty, scheduling auto-disconnect.");
                 queue.scheduleDisconnect(client, guildId);
             }
         });
@@ -141,6 +150,10 @@ async function startPlayer(interaction, client, queue, guildId, member) {
             if (next) {
                 queue.current = next;
                 player.playTrack({ track: { encoded: next.track.encoded } });
+            } else {
+                queue.current = null;
+                console.log("[Player] Queue empty after exception, scheduling auto-disconnect.");
+                queue.scheduleDisconnect(client, guildId);
             }
         });
 
@@ -150,10 +163,15 @@ async function startPlayer(interaction, client, queue, guildId, member) {
             if (next) {
                 queue.current = next;
                 player.playTrack({ track: { encoded: next.track.encoded } });
+            } else {
+                queue.current = null;
+                console.log("[Player] Queue empty after stuck, scheduling auto-disconnect.");
+                queue.scheduleDisconnect(client, guildId);
             }
         });
 
-        player.on("closed", () => {
+        player.on("closed", (data) => {
+            console.log(`[Player] WebSocket closed — code: ${data?.code}, reason: ${data?.reason}`);
             queue.clear();
             queue.player = null;
             client.queues.delete(guildId);
