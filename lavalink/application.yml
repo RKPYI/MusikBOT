@@ -32,6 +32,7 @@ plugins:
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
     clients:
+      - TV                # OAuth-compatible — uses your login credentials
       - TVHTML5_SIMPLY
       - ANDROID_MUSIC
       - WEB
