@@ -48,7 +48,7 @@ export class GuildQueue {
         this._disconnectTimer = setTimeout(async () => {
             try {
                 if (this.player) {
-                    await this.player.destroyPlayer();
+                    await this.player.destroy();
                 }
                 client.shoukaku.leaveVoiceChannel(guildId);
                 this.clear();

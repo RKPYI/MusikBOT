@@ -15,7 +15,7 @@ export async function execute(interaction, client) {
 
     if (queue.player) {
         await queue.player.stopTrack();
-        await queue.player.destroyPlayer();
+        await queue.player.destroy();
         client.shoukaku.leaveVoiceChannel(guildId);
     }
 
