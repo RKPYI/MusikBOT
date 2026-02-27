@@ -1,9 +1,10 @@
 # 🎵 MusikBOT
 
-A Discord music bot that plays audio from **YouTube** or by **search query** — powered by slash commands.
+A Discord music bot that plays audio from **YouTube** (and more) — powered by **Lavalink** and slash commands.
 
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
-![discord.py](https://img.shields.io/badge/discord.py-2.3+-5865F2?logo=discord&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-22+-339933?logo=node.js&logoColor=white)
+![discord.js](https://img.shields.io/badge/discord.js-14-5865F2?logo=discord&logoColor=white)
+![Lavalink](https://img.shields.io/badge/Lavalink-4-orange)
 
 ---
 
@@ -36,28 +37,14 @@ A Discord music bot that plays audio from **YouTube** or by **search query** —
 
 ### Prerequisites
 
-- **Python 3.10+**
-- **FFmpeg** installed and in your `PATH`
-  ```bash
-  # Ubuntu / Debian
-  sudo apt install ffmpeg
-
-  # Arch
-  sudo pacman -S ffmpeg
-
-  # macOS
-  brew install ffmpeg
-  ```
+- **Node.js 20+** (22 recommended)
+- **Docker** (for Lavalink)
 
 ### 1. Clone & Install
 
 ```bash
 cd MusikBOT
-python -m venv .venv
-source .venv/bin/activate    # Linux / macOS
-# .venv\Scripts\activate     # Windows
-
-pip install -r requirements.txt
+npm install
 ```
 
 ### 2. Create a Discord Bot
@@ -82,43 +69,44 @@ Edit `.env` and fill in your Discord bot token:
 DISCORD_TOKEN=your_discord_bot_token_here
 ```
 
-### 4. Set Up YouTube Authentication
+The Lavalink defaults (`localhost:2333`, `youshallnotpass`) will work out of the box with the included Docker Compose setup.
 
-YouTube blocks automated requests. The recommended fix is the **PO Token plugin**, which generates authentication tokens automatically.
-
-#### Option A — Docker (easiest, recommended)
+### 4. Start Lavalink
 
 ```bash
-docker run -d --name bgutil-provider --restart unless-stopped -p 4416:4416 brainicism/bgutil-ytdlp-pot-provider
+docker compose up -d
 ```
 
-That's it — the plugin (already in `requirements.txt`) will connect to the server on `127.0.0.1:4416` automatically.
+This starts the Lavalink audio server with the **youtube-source** plugin.
 
-#### Option B — Node.js (no Docker)
+#### YouTube OAuth (recommended)
+
+On first launch, check the Lavalink logs:
 
 ```bash
-# Requires Node.js >= 20
-git clone --single-branch --branch 1.2.2 https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git
-cd bgutil-ytdlp-pot-provider/server/
-npm ci && npx tsc
-node build/main.js          # runs on port 4416
+docker compose logs -f lavalink
 ```
 
-#### Option C — Cookies (fallback, expires periodically)
+Look for a line like:
+```
+To give the minimum access, **only** select the **Send email** scope.
+Visit the following URL: https://www.google.com/device ...
+```
 
-Export cookies from your browser using the [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) extension and place `cookies.txt` in the project root. See `.env.example` for details.
+Follow the URL, sign in with a Google account, and authorize. Lavalink will remember the token automatically.
 
 ### 5. Run the Bot
 
 ```bash
-python bot.py
+node src/bot.js
 ```
 
 You should see:
 ```
-2026-02-27 04:00:00 │ musikbot              │ INFO     │ Logged in as MusikBOT#1234 (ID: ...)
-2026-02-27 04:00:00 │ musikbot              │ INFO     │ Connected to 1 guild(s)
-2026-02-27 04:00:00 │ musikbot              │ INFO     │ Synced 9 slash command(s)
+[Shoukaku] Node "main" connected
+Logged in as MusikBOT#1234 (ID: ...)
+Connected to 1 guild(s)
+Synced 9 slash command(s)
 ```
 
 ---
@@ -127,21 +115,34 @@ You should see:
 
 ```
 MusikBOT/
-├── .env.example        # Environment template
+├── .env.example             # Environment template
 ├── .gitignore
-├── requirements.txt
+├── package.json
+├── docker-compose.yml       # Lavalink container
 ├── README.md
-├── bot.py              # Entry point
-├── cogs/
-│   └── music.py        # Music slash commands
-└── utils/
-    └── music_sources.py # YouTube search & extraction
+├── lavalink/
+│   └── application.yml      # Lavalink server config
+└── src/
+    ├── bot.js               # Entry point (discord.js + Shoukaku)
+    ├── queue.js              # Per-guild queue manager
+    ├── embeds.js             # Embed builders & helpers
+    └── commands/
+        ├── play.js
+        ├── skip.js
+        ├── queue.js
+        ├── pause.js
+        ├── resume.js
+        ├── stop.js
+        ├── nowplaying.js
+        ├── volume.js
+        └── loop.js
 ```
 
 ## 📝 Notes
 
-- The bot requires the **FFmpeg** binary to transcode audio for Discord voice.
+- **Lavalink** handles all audio extraction and streaming — no FFmpeg needed on the bot side.
 - Slash commands may take up to an hour to appear globally after first sync. For instant testing, consider guild-specific sync.
+- The youtube-source plugin supports multiple InnerTube clients and falls through them automatically if one is blocked.
 
 ---
 

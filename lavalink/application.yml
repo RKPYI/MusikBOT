@@ -1,0 +1,57 @@
+server:
+  port: 2333
+  address: 0.0.0.0
+
+lavalink:
+  server:
+    password: "youshallnotpass"
+    sources:
+      youtube: false        # Disable built-in YouTube source (we use the plugin)
+      bandcamp: true
+      soundcloud: true
+      twitch: true
+      vimeo: true
+      http: true
+      local: false
+    bufferDurationMs: 400
+    frameBufferDurationMs: 5000
+    youtubePlaylistLoadLimit: 100
+    playerUpdateInterval: 5
+    youtubeSearchEnabled: true
+    soundcloudSearchEnabled: true
+    gc-warnings: true
+
+  plugins:
+    - dependency: "dev.lavalink.youtube:youtube-plugin:1.18.0"
+      snapshot: false
+
+plugins:
+  youtube:
+    enabled: true
+    allowSearch: true
+    allowDirectVideoIds: true
+    allowDirectPlaylistIds: true
+    clients:
+      - MUSIC
+      - ANDROID_VR
+      - WEB
+      - TVHTML5_SIMPLY
+    # ─── OAuth (recommended to avoid 403 / bot-check blocks) ─────────────
+    # Run the bot once, then check Lavalink logs for an OAuth URL.
+    # Visit the URL, authorize, and Lavalink will save a refresh token.
+    oauth:
+      enabled: true
+    # ─── PO Token (alternative / additional measure) ─────────────────────
+    # pot:
+    #   token: ""
+    #   visitorData: ""
+
+logging:
+  level:
+    root: INFO
+    lavalink: INFO
+
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 5

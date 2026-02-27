@@ -14,18 +14,19 @@ import yt_dlp
 
 logger = logging.getLogger("musikbot.sources")
 
-# ─── Cookie / PO Token support ───────────────────────────────────────────────
-# YouTube blocks automated requests. Solutions (in order of preference):
+# ─── YouTube Authentication ───────────────────────────────────────────────────
+# Cloud/VPS IPs are flagged by YouTube and REQUIRE cookies to work.
+# Place a cookies.txt (Netscape format) in the project root.
 #
-# 1. Install bgutil-ytdlp-pot-provider plugin + run its Docker server
-#    → fully automatic PO token generation, no cookies needed.
-#    pip install bgutil-ytdlp-pot-provider
-#    docker run -d --name bgutil-provider -p 4416:4416 brainicism/bgutil-ytdlp-pot-provider
+# Export steps (one-time, lasts weeks/months):
+#   1. Open an incognito window → log into YouTube
+#   2. Navigate to https://www.youtube.com/robots.txt
+#   3. Use "Get cookies.txt LOCALLY" extension to export cookies.txt
+#   4. Close the incognito window (don't reuse that session in the browser)
+#   5. Copy cookies.txt to the project root next to bot.py
 #
-# 2. Place a cookies.txt (Netscape format) in the project root.
-#
-# 3. Set COOKIES_FROM_BROWSER=firefox (or chrome, etc.) in .env
-#    (only works when the bot runs on a machine with that browser).
+# The PO Token plugin (bgutil-ytdlp-pot-provider) + Node.js runtime
+# handle token generation automatically once cookies authenticate you.
 _COOKIES_FILE = Path(__file__).resolve().parent.parent / "cookies.txt"
 _COOKIES_FROM_BROWSER = os.getenv("COOKIES_FROM_BROWSER")
 
@@ -38,15 +39,22 @@ YDL_OPTIONS = {
     "default_search": "ytsearch",
     "source_address": "0.0.0.0",
     "extract_flat": False,
+    # Node.js runtime for JS challenges & PO Token generation
+    "js_runtimes": {"node": {}},
 }
 
-# Apply cookie settings (only needed if NOT using PO Token plugin)
+# Apply cookie settings — required on cloud/VPS servers
 if _COOKIES_FILE.is_file():
     YDL_OPTIONS["cookiefile"] = str(_COOKIES_FILE)
     logger.info("Using cookies from %s", _COOKIES_FILE)
 elif _COOKIES_FROM_BROWSER:
     YDL_OPTIONS["cookiesfrombrowser"] = (_COOKIES_FROM_BROWSER,)
     logger.info("Using cookies from browser: %s", _COOKIES_FROM_BROWSER)
+else:
+    logger.warning(
+        "No cookies.txt found! YouTube will likely block requests from this server. "
+        "See utils/music_sources.py for export instructions."
+    )
 
 # FFmpeg options for discord.py voice
 FFMPEG_OPTIONS = {
