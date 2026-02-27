@@ -41,6 +41,10 @@ plugins:
     oauth:
       enabled: true
       refreshToken: ""
+    # ─── Remote Cipher (fixes signature extraction failures) ────────────
+    remoteCipher:
+      url: "https://cipher.kikkia.dev/"
+      userAgent: "musikbot"
     # ─── PO Token (alternative / additional measure) ─────────────────────
     # pot:
     #   token: ""
