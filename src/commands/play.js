@@ -174,6 +174,12 @@ async function startPlayer(interaction, client, queue, guildId, member) {
             console.log(`[Player] WebSocket closed — code: ${data?.code}, reason: ${data?.reason}`);
             queue.clear();
             queue.player = null;
+            // Clean up Shoukaku's internal connection so future /play calls can rejoin
+            try {
+                client.shoukaku.leaveVoiceChannel(guildId);
+            } catch {
+                // already cleaned up
+            }
             client.queues.delete(guildId);
         });
     }
