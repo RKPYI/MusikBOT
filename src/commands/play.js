@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { getQueue } from "../queue.js";
 import { nowPlayingEmbed, queuedEmbed, errorEmbed } from "../embeds.js";
 
@@ -19,7 +19,7 @@ export async function execute(interaction, client) {
     if (!member.voice?.channel) {
         return interaction.followUp({
             embeds: [errorEmbed("You need to be in a voice channel!")],
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     }
 

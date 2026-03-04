@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { getQueue } from "../queue.js";
 import { errorEmbed, infoEmbed, Colors } from "../embeds.js";
 import { EmbedBuilder } from "discord.js";
@@ -13,7 +13,7 @@ export async function execute(interaction, client) {
     if (!queue.player || !queue.current) {
         return interaction.reply({
             embeds: [errorEmbed("Nothing is paused right now.")],
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     }
 

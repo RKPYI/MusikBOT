@@ -3,6 +3,7 @@ import {
     GatewayIntentBits,
     ActivityType,
     Collection,
+    MessageFlags,
 } from "discord.js";
 import { Shoukaku, Connectors } from "shoukaku";
 import { config } from "dotenv";
@@ -100,14 +101,18 @@ client.on("interactionCreate", async (interaction) => {
         await command.execute(interaction, client);
     } catch (error) {
         console.error(`[Command Error] /${interaction.commandName}:`, error);
-        const reply = {
-            content: "❌ An error occurred while executing this command.",
-            ephemeral: true,
-        };
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp(reply);
-        } else {
-            await interaction.reply(reply);
+        try {
+            const reply = {
+                content: "❌ An error occurred while executing this command.",
+                flags: MessageFlags.Ephemeral,
+            };
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp(reply);
+            } else {
+                await interaction.reply(reply);
+            }
+        } catch (replyError) {
+            console.error(`[Command Error] Failed to send error response for /${interaction.commandName}:`, replyError.message);
         }
     }
 });

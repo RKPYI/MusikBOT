@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from "discord.js";
 import { getQueue } from "../queue.js";
 import { Colors, formatDuration } from "../embeds.js";
 
@@ -17,7 +17,7 @@ export async function execute(interaction, client) {
                     .setDescription("The queue is empty. Use `/play` to add songs!")
                     .setColor(Colors.INFO),
             ],
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
     }
 
